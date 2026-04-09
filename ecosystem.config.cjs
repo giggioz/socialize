@@ -7,7 +7,7 @@
 const HOST = '217.160.58.145';
 const USER = 'root';
 
-const PROJECT_PRODUCTION = 'costruisci-i-tuoi-successi';
+const PROJECT_PRODUCTION = 'socialize';
 
 function productionPostDeploy() {
   const base = `/srv/nodeapps/${PROJECT_PRODUCTION}/source`;
