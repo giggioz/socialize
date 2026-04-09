@@ -18,7 +18,7 @@ function productionPostDeploy() {
     `cp -r ${upload}/. ${base}/frontend/dist/`,
     `rm -rf ${upload}`,
     `cd ${base}/backend && npm ci && npm run build`,
-    `cd ${base} && pm2 startOrReload ecosystem.config.cjs --only ${PROJECT_PRODUCTION}-api --env production`,
+    `cd ${base} && pm2 startOrReload ecosystem.config.cjs --env production`,
     `pm2 save`,
   ].join(' && ');
 }
@@ -47,6 +47,16 @@ module.exports = {
       cwd: './backend',
       script: 'npm',
       args: 'start',
+      time: true,
+      env_production: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: `${PROJECT_PRODUCTION}-web`,
+      cwd: './frontend/dist',
+      script: 'npx',
+      args: 'serve -l 8080 --single',
       time: true,
       env_production: {
         NODE_ENV: 'production',
