@@ -36,7 +36,8 @@ function productionPreDeployLocal() {
     `scp -r dist/ ${USER}@${HOST}:${upload}`,
     // 3) Upload env production del backend (aggiornato per Mongo remoto)
     `ssh ${USER}@${HOST} mkdir -p ${base}/backend`,
-    `scp ../backend/.env.production ${USER}@${HOST}:${base}/backend/.env.production`,
+    // @fastify/env con `dotenv: true` carica per default solo `.env`
+    `scp ../backend/.env.production ${USER}@${HOST}:${base}/backend/.env`,
   ].join(' && ');
 }
 
