@@ -1,0 +1,47 @@
+{
+  "name": "costruisci-i-tuoi-successi",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w backend & npm run dev -w frontend",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "electron:dev": "concurrently -k -n BACKEND,FRONTEND,ELECTRON -c red,cyan,green \"npm run dev -w backend\" \"npm run dev -w frontend\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
+    "electron:build": "npm run build -w backend && npm run build:electron:renderer && electron-builder --config electron-builder.json",
+    "build:electron:renderer": "npm run build -w frontend -- --mode electron"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "electron/main.cjs",
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/env": "^6.0.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/jwt": "^10.0.0",
+    "@fastify/sensible": "^6.0.4",
+    "@google/generative-ai": "^0.24.1",
+    "@mozilla/readability": "^0.6.0",
+    "argon2": "^0.44.0",
+    "fastify": "^5.8.4",
+    "jsdom": "^29.0.2",
+    "mongodb": "^7.1.1",
+    "pino": "^10.3.1",
+    "undici": "^8.0.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0",
+    "wait-on": "^8.0.5"
+  }
+}
