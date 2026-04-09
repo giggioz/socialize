@@ -1,41 +1,66 @@
 /**
- * PM2: deploy orchestration (git + hook). I container restano gestiti da Docker sul server.
- * Aggiorna `repo` con l’URL del tuo remoto Git.
+ * PM2: deploy orchestration (git + hook).
+ * - Builda il client in locale e carica `dist/` sulla macchina remota
+ * - Fa deploy del backend e lo (ri)avvia via PM2
+ * Nessun uso di Docker.
  */
 const HOST = '217.160.58.145';
 const USER = 'root';
 
-function compose(project) {
-  return `bash scripts/compose-cmd.sh -p ${project} -f docker-compose.yml -f docker-compose.deploy.yml`;
-}
-
-const PROJECT_PRODUCTION = 'socialize';
+const PROJECT_PRODUCTION = 'costruisci-i-tuoi-successi';
 
 function productionPostDeploy() {
-  const base = '/srv/nodeapps/socialize/source';
+  const base = `/srv/nodeapps/${PROJECT_PRODUCTION}/source`;
+  const upload = `/srv/nodeapps/${PROJECT_PRODUCTION}-upload-production`;
   return [
     `cd ${base}`,
-    `${compose(PROJECT_PRODUCTION)} up -d --build`,
+    `mkdir -p ${base}/frontend/dist`,
+    `cp -r ${upload}/. ${base}/frontend/dist/`,
+    `rm -rf ${upload}`,
+    `cd ${base}/backend && npm ci && npm run build`,
+    `cd ${base} && pm2 startOrReload ecosystem.config.cjs --only ${PROJECT_PRODUCTION}-api --env production`,
+    `pm2 save`,
   ].join(' && ');
 }
 
 function productionPreDeployLocal() {
+  const base = `/srv/nodeapps/${PROJECT_PRODUCTION}/source`;
+  const upload = `/srv/nodeapps/${PROJECT_PRODUCTION}-upload-production`;
   return [
-    `scp backend/.env.production ${USER}@${HOST}:/srv/nodeapps/socialize/source/backend/.env.production`,
-    `scp frontend/.env.production ${USER}@${HOST}:/srv/nodeapps/socialize/source/frontend/.env.production`,
+    // 1) Build client in locale
+    `cd frontend`,
+    `npm ci`,
+    `npm run build`,
+    // 2) Upload dist su server (cartella temporanea)
+    `ssh ${USER}@${HOST} rm -rf ${upload}`,
+    `scp -r dist/ ${USER}@${HOST}:${upload}`,
+    // 3) Upload env production del backend (aggiornato per Mongo remoto)
+    `ssh ${USER}@${HOST} mkdir -p ${base}/backend`,
+    `scp ../backend/.env.production ${USER}@${HOST}:${base}/backend/.env.production`,
   ].join(' && ');
 }
 
 module.exports = {
-  apps: [],
+  apps: [
+    {
+      name: `${PROJECT_PRODUCTION}-api`,
+      cwd: './backend',
+      script: 'npm',
+      args: 'start',
+      time: true,
+      env_production: {
+        NODE_ENV: 'production',
+      },
+    },
+  ],
 
   deploy: {
     production: {
       user: USER,
       host: HOST,
       ref: 'origin/main',
-      repo: 'REPLACE_ME_WITH_YOUR_GIT_REMOTE',
-      path: '/srv/nodeapps/costruisci-i-tuoi-successi',
+      repo: 'git@github.com:giggioz/socialize.git',
+      path: `/srv/nodeapps/${PROJECT_PRODUCTION}`,
       'pre-deploy-local': productionPreDeployLocal(),
       'post-deploy': productionPostDeploy(),
     },
