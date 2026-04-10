@@ -32,7 +32,7 @@ function productionPreDeployLocal() {
     `npm ci`,
     `npm run build`,
     // 2) Upload dist su server (cartella temporanea)
-    `ssh ${USER}@${HOST} rm -rf ${upload} && mkdir -p ${upload}`,
+    `ssh ${USER}@${HOST} "rm -rf ${upload} && mkdir -p ${upload}"`,
     // Copia i contenuti di dist/ (non la cartella dist stessa) per evitare dist/dist sul server
     `scp -r dist/. ${USER}@${HOST}:${upload}/`,
     // 3) Upload env production del backend (aggiornato per Mongo remoto)
