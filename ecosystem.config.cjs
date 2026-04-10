@@ -4,6 +4,8 @@
  * - Fa deploy del backend e lo (ri)avvia via PM2
  * Nessun uso di Docker.
  */
+const path = require("node:path");
+
 const HOST = '217.160.58.145';
 const USER = 'root';
 
@@ -41,7 +43,7 @@ module.exports = {
   apps: [
     {
       name: `${PROJECT_PRODUCTION}-api`,
-      cwd: './backend',
+      cwd: path.join(__dirname, "backend"),
       script: 'npm',
       args: 'start',
       time: true,
@@ -51,7 +53,7 @@ module.exports = {
     },
     {
       name: `${PROJECT_PRODUCTION}-web`,
-      cwd: './frontend/dist',
+      cwd: path.join(__dirname, "frontend", "dist"),
       script: 'npx',
       args: 'serve -l 8080 --single',
       time: true,
