@@ -29,6 +29,11 @@ npm run dev
 - UI: `http://localhost:5173`
 - API: `http://localhost:3001`
 
+Note su `docker-compose.mongo.yml`:
+
+- Il volume `mongo_dev_data` rende persistenti i dati (montato su `/data/db`). Con `name: dev-mongo-data` il volume ha un nome stabile (utile se vuoi riutilizzarlo tra progetti/compose diversi).
+- La rete `dev_mongo_net` non è “obbligatoria”: serve solo se vuoi un nome rete stabile (`dev-mongo-net`) per collegare anche container di altri compose/progetti; altrimenti puoi usare la rete di default di Compose.
+
 ### 2) Docker in locale (stack “prod-like”)
 
 ```bash
@@ -69,6 +74,18 @@ docker-compose exec -T api node backend/dist/scripts/seed-user.js --username=adm
 docker-compose pull
 docker-compose up -d
 ```
+
+### Debug Mongo via SSH tunnel (porta 27098)
+
+Su server, `mongo` pubblica `127.0.0.1:27098 -> 27017` (loopback only), così non è esposta su internet ma è raggiungibile via tunnel SSH.
+
+Dal tuo PC:
+
+```bash
+ssh -N -L 27098:127.0.0.1:27098 root@217.160.58.145
+```
+
+Poi connettiti a `mongodb://127.0.0.1:27098` (Compass / `mongosh`).
 
 ### CI → immagini → deploy
 

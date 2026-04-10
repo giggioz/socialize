@@ -1,25 +1,4 @@
 services:
-  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    container_name: local-mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change-me}
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - local_stack_net
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mongosh --quiet \"mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin\" --eval \"db.runCommand({ ping: 1 }).ok\" | grep -q 1",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
   api:
     image: ${API_IMAGE:-costrui/api:dev}
     build:
@@ -27,11 +6,12 @@ services:
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     container_name: local-api
-    depends_on:
-      mongo:
-        condition: service_healthy
     env_file:
       - ./backend/.env
+    ports:
+      - "127.0.0.1:3002:3001"
+    extra_hosts:
+      - "mongodb:host-gateway"
     expose:
       - "3001"
     networks:
@@ -56,41 +36,12 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    ports:
+      - "127.0.0.1:8081:80"
     expose:
       - "80"
     networks:
       - local_stack_net
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    container_name: local-caddy
-    depends_on:
-      web:
-        condition: service_started
-      api:
-        condition: service_healthy
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DOMAIN: ${DOMAIN:-localhost}
-      CADDY_EMAIL: ${CADDY_EMAIL:-}
-    volumes:
-      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - local_stack_net
-
-volumes:
-  mongo_data:
-    name: local-mongo-data
-  caddy_data:
-    name: local-caddy-data
-  caddy_config:
-    name: local-caddy-config
-
 networks:
   local_stack_net:
     name: local-stack-net
