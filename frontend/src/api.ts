@@ -27,7 +27,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers["Content-Type"] = "application/json";
   }
   const token = getStoredAuthToken();
-  if (token && !("Authorization" in headers)) {
+  const shouldAttachAuthHeader =
+    !path.startsWith("/auth/login") && !path.startsWith("/auth/logout");
+  if (shouldAttachAuthHeader && token && !("Authorization" in headers)) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 

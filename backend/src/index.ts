@@ -58,10 +58,19 @@ await app.register(env, {
   },
 });
 
+console.log("[config]", { NODE_ENV: app.config.NODE_ENV, CORS_ORIGIN: app.config.CORS_ORIGIN });
+
 await app.register(cors, {
   origin: (origin, cb) => {
     const allowed = (app.config.CORS_ORIGIN ?? "").split(",").map((s: string) => s.trim());
     if (!origin || allowed.includes(origin)) return cb(null, true);
+    // Using console.error so it always shows in dev output
+    console.error("[cors] not allowed", {
+      origin,
+      allowed,
+      CORS_ORIGIN: app.config.CORS_ORIGIN,
+      NODE_ENV: app.config.NODE_ENV,
+    });
     return cb(new Error("CORS not allowed"), false);
   },
   credentials: true,
@@ -80,6 +89,11 @@ await app.register(sensible);
 
 const db = await createDb(app.config.MONGODB_URI);
 app.decorate("db", db);
+
+app.get("/debug/cors", async () => {
+  const allowed = (app.config.CORS_ORIGIN ?? "").split(",").map((s: string) => s.trim());
+  return { NODE_ENV: app.config.NODE_ENV, CORS_ORIGIN: app.config.CORS_ORIGIN, allowed };
+});
 
 await app.register(authRoutes, { prefix: "/auth" });
 await app.register(researchesRoutes, { prefix: "/researches" });
