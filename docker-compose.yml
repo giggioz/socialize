@@ -9,7 +9,7 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "127.0.0.1:3002:3001"
+      - "3001:3001"
     extra_hosts:
       - "mongodb:host-gateway"
     expose:
@@ -37,7 +37,7 @@ services:
       api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:8081:80"
+      - "8080:80"
     expose:
       - "80"
     networks:
