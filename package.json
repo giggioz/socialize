@@ -1,5 +1,5 @@
 {
-  "name": "costruisci-i-tuoi-successi",
+  "name": "socialize",
   "version": "1.0.0",
   "description": "",
   "private": true,
@@ -10,16 +10,12 @@
   "scripts": {
     "dev": "npm run dev -w backend & npm run dev -w frontend",
     "build": "npm run build -w backend && npm run build -w frontend",
-    "lint": "npm run lint -w backend && npm run lint -w frontend",
-    "electron:dev": "concurrently -k -n BACKEND,FRONTEND,ELECTRON -c red,cyan,green \"npm run dev -w backend\" \"npm run dev -w frontend\" \"wait-on http://localhost:5173 && cross-env ELECTRON_DEV=1 ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
-    "electron:build": "npm run build -w backend && npm run build:electron:renderer && electron-builder --config electron-builder.json",
-    "build:electron:renderer": "npm run build -w frontend -- --mode electron"
+    "lint": "npm run lint -w backend && npm run lint -w frontend"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "main": "electron/main.cjs",
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
@@ -38,10 +34,5 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "cross-env": "^7.0.3",
-    "electron": "^38.0.0",
-    "electron-builder": "^26.0.0",
-    "wait-on": "^8.0.5"
   }
 }

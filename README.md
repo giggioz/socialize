@@ -5,72 +5,80 @@ Monorepo con:
 - `backend/`: API Fastify (build in `backend/dist/`)
 - `frontend/`: React + Vite (build in `frontend/dist/`)
 
-## Deploy (senza Docker) con PM2
+## Modalità di esecuzione (dev / docker / prod)
 
-Il deploy è orchestrato da `ecosystem.config.cjs` usando **PM2 Deploy**:
+### Concetto chiave: `.env` “attivo” + preset
 
-- in **locale** fa la build del frontend e carica `frontend/dist/` sul server via `scp`
-- copia `backend/.env.production` sul server come `backend/.env`
-- sul server fa `npm ci && npm run build` nel backend e poi `pm2 startOrReload ... --env production`
+- **I processi leggono sempre e solo `.env`**:
+  - backend: `backend/.env`
+  - frontend: `frontend/.env`
+- I file `*.env.development` / `*.env.production` sono **preset** da copiare su `.env` in base a come vuoi lanciare l’app.
 
-### Prerequisiti
+### 1) Dev (hot reload, senza Docker)
 
-- **In locale**
-  - Node.js + npm
-  - `pm2` installato: `npm i -g pm2`
-  - accesso SSH al server configurato (chiave, host, user)
-  - permessi per clonare il repo definito in `ecosystem.config.cjs` (GitHub SSH)
-
-- **Sul server**
-  - Node.js + npm
-  - `pm2` installato: `npm i -g pm2`
-  - `git` installato
-  - porta 8080 raggiungibile (il frontend viene servito con `serve -l 8080 --single`)
-
-### Configurazione
-
-Apri `ecosystem.config.cjs` e verifica:
-
-- `HOST`, `USER`
-- `PROJECT_PRODUCTION`
-- `deploy.production.repo` (repo SSH)
-- `deploy.production.ref` (branch)
-- `deploy.production.path` (es. `/srv/nodeapps/<nome>`)
-
-Verifica anche che `backend/.env.production` sia aggiornato: durante il deploy viene caricato sul server come `backend/.env`.
-
-### Primo deploy (setup)
-
-Esegue il setup della directory di deploy sul server e clona il repository:
+Prerequisito: MongoDB in Docker su `127.0.0.1:27099`.
 
 ```bash
-pm2 deploy ecosystem.config.cjs production setup
+docker-compose -f docker-compose.mongo.yml up -d
+cp backend/.env.development backend/.env
+cp frontend/.env.development frontend/.env
+npm install
+npm run dev
 ```
 
-### Deploy (aggiornamento)
+- UI: `http://localhost:5173`
+- API: `http://localhost:3001`
 
-Esegue `pre-deploy-local` (build + upload) e `post-deploy` (install/build backend + reload):
+### 2) Docker in locale (stack “prod-like”)
 
 ```bash
-pm2 deploy ecosystem.config.cjs production
+cp backend/.env.production backend/.env
+cp frontend/.env.production frontend/.env
+docker-compose up -d --build
 ```
 
-### Gestione processi e log
+- UI: `https://localhost/` (certificato locale → il browser può mostrare un warning)
+- API: `https://localhost/api/*`
+
+Creazione utente iniziale (es. `admin/admin`):
 
 ```bash
-pm2 status
-pm2 logs
-pm2 logs socialize-api
-pm2 logs socialize-web
+
+// DEV
+npm run seed:user:dev -w backend -- --username=admin --password=admin
+
+// PROD LIKE
+docker-compose exec -T api node backend/dist/scripts/seed-user.js --username=admin --password=admin
 ```
 
-I nomi dei processi sono definiti in `ecosystem.config.cjs`:
+## Deploy (Docker Compose) su singola VM
 
-- `<PROJECT_PRODUCTION>-api`
-- `<PROJECT_PRODUCTION>-web`
+### Setup (una tantum)
 
-### Note importanti
+- Installa Docker + Docker Compose sulla VM
+- Apri solo porte **80/443** (e SSH)
+- Clona questo repo sulla VM
+- Crea i file env (non committare segreti):
+  - `./backend/.env` (copialo da `./backend/.env.production`)
+  - `./frontend/.env` (copialo da `./frontend/.env.production` — consigliato: `VITE_API_BASE_URL=/api`)
+  - variabili root per Compose: `DOMAIN`, `CADDY_EMAIL` (opzionale), `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`
 
-- **Build frontend**: viene fatta **in locale** (non sul server) e viene caricato solo `frontend/dist/`.
-- **Env backend**: il backend usa `@fastify/env` e, in produzione, viene caricato il file `backend/.env` (che nel deploy viene sovrascritto copiando `backend/.env.production`).
-- Se il copia/incolla negli appunti non funziona in produzione su web, assicurati di servire il frontend in un contesto sicuro (`https://`); in ogni caso l’app gestisce il fallback e non deve andare in crash.
+### Avvio / aggiornamento
+
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+### CI → immagini → deploy
+
+Il workflow GitHub Actions builda e pusha immagini su GHCR:
+
+- `ghcr.io/<owner>/<repo>-api:<sha>`
+- `ghcr.io/<owner>/<repo>-web:<sha>`
+
+Per deployare una versione specifica, imposta `API_IMAGE` e `WEB_IMAGE` sul server e lancia:
+
+```bash
+./scripts/deploy.sh <sha>
+```

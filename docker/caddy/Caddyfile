@@ -1,0 +1,18 @@
+{
+	# If you want ACME email, add e.g.:
+	# email you@example.com
+}
+
+# Tip: for local testing set DOMAIN="http://localhost"
+{$DOMAIN} {
+	encode zstd gzip
+
+	handle_path /api/* {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}
+

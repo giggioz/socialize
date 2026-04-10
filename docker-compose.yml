@@ -2,33 +2,96 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    ports:
-      - "27018:27017"
+    container_name: local-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change-me}
     volumes:
       - mongo_data:/data/db
+    networks:
+      - local_stack_net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet \"mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin\" --eval \"db.runCommand({ ping: 1 }).ok\" | grep -q 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   api:
+    image: ${API_IMAGE:-costrui/api:dev}
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
+    container_name: local-api
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     env_file:
-      - ./backend/.env.development
-    ports:
-      - "3001:3001"
+      - ./backend/.env
+    expose:
+      - "3001"
+    networks:
+      - local_stack_net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3001/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 12
 
   web:
+    image: ${WEB_IMAGE:-costrui/web:dev}
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     restart: unless-stopped
+    container_name: local-web
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    expose:
+      - "80"
+    networks:
+      - local_stack_net
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    container_name: local-caddy
+    depends_on:
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      CADDY_EMAIL: ${CADDY_EMAIL:-}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - local_stack_net
 
 volumes:
   mongo_data:
+    name: local-mongo-data
+  caddy_data:
+    name: local-caddy-data
+  caddy_config:
+    name: local-caddy-config
+
+networks:
+  local_stack_net:
+    name: local-stack-net
 
