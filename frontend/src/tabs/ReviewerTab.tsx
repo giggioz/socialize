@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { copyTextToClipboard } from "../clipboard";
 
 export type ReviewerTabProps = Readonly<{
   selectedContextId: string;
@@ -123,7 +124,7 @@ export function ReviewerTab(props: ReviewerTabProps) {
               disabled={!props.reviewerPromptText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.reviewerPromptText);
+                  await copyTextToClipboard(props.reviewerPromptText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }
@@ -167,7 +168,7 @@ export function ReviewerTab(props: ReviewerTabProps) {
               disabled={!props.reviewerResultText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.reviewerResultText);
+                  await copyTextToClipboard(props.reviewerResultText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }

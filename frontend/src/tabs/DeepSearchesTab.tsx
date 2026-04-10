@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialDeepSearchListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type DeepSearchesTabProps = Readonly<{
   deepSearchesLoading: boolean;
@@ -74,7 +75,7 @@ export function DeepSearchesTab(props: DeepSearchesTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.deepSearchReport);
+                            await copyTextToClipboard(selected.deepSearchReport);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

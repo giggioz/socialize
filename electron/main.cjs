@@ -76,6 +76,13 @@ function startBackendIfNeeded() {
 
   const { backendDir, envPath } = ensureBackendEnvFile();
   const backendLogPath = path.join(backendDir, "backend.log");
+  let logStream = null;
+  try {
+    logStream = fs.createWriteStream(backendLogPath, { flags: "a" });
+    logStream.write(`\n--- backend start ${new Date().toISOString()} ---\n`);
+  } catch {
+    // ignore (best effort logging)
+  }
   const backendDistEntry = app.isPackaged
     ? path.join(process.resourcesPath, "app.asar.unpacked", "backend", "dist", "index.js")
     : path.join(app.getAppPath(), "backend", "dist", "index.js");
@@ -91,33 +98,44 @@ function startBackendIfNeeded() {
   // In a packaged Electron app, process.execPath is the Electron binary.
   // To run a plain Node script without spawning a second Electron instance,
   // set ELECTRON_RUN_AS_NODE=1.
-  backendProcess = spawn(process.execPath, [backendDistEntry], {
-    cwd: backendDir,
-    stdio: "pipe",
-    env: {
-      ...process.env,
-      PORT: String(BACKEND_PORT),
-      ELECTRON_RUN_AS_NODE: "1",
-      ...(app.isPackaged
-        ? {
-            NODE_PATH: [
-              path.join(process.resourcesPath, "app.asar.unpacked", "node_modules"),
-              process.env.NODE_PATH,
-            ]
-              .filter(Boolean)
-              .join(path.delimiter),
-          }
-        : null),
-      // fastify-env legge `.env` dal cwd; qui puntiamo apposta a userData/backend
-    },
-  });
-
-  const logStream = fs.createWriteStream(backendLogPath, { flags: "a" });
-  logStream.write(`\n--- backend start ${new Date().toISOString()} ---\n`);
+  try {
+    backendProcess = spawn(process.execPath, [backendDistEntry], {
+      cwd: backendDir,
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        PORT: String(BACKEND_PORT),
+        ELECTRON_RUN_AS_NODE: "1",
+        ...(app.isPackaged
+          ? {
+              NODE_PATH: [
+                path.join(process.resourcesPath, "app.asar.unpacked", "node_modules"),
+                process.env.NODE_PATH,
+              ]
+                .filter(Boolean)
+                .join(path.delimiter),
+            }
+          : null),
+        // fastify-env legge `.env` dal cwd; qui puntiamo apposta a userData/backend
+      },
+    });
+  } catch (err) {
+    try {
+      logStream?.write(`[spawn throw] ${String(err?.stack || err)}\n`);
+      logStream?.end();
+    } catch {
+      // ignore
+    }
+    dialog.showErrorBox(
+      "Backend terminato",
+      `Impossibile avviare il backend.\n\nErrore: ${err?.message || String(err)}\n\nLog: ${backendLogPath}`,
+    );
+    return;
+  }
 
   backendProcess.on("error", (err) => {
     try {
-      logStream.write(`[spawn error] ${String(err?.stack || err)}\n`);
+      logStream?.write(`[spawn error] ${String(err?.stack || err)}\n`);
     } catch {
       // ignore
     }
@@ -129,7 +147,7 @@ function startBackendIfNeeded() {
 
   backendProcess.stdout?.on("data", (d) => {
     try {
-      logStream.write(d);
+      logStream?.write(d);
     } catch {
       // ignore
     }
@@ -137,7 +155,7 @@ function startBackendIfNeeded() {
   });
   backendProcess.stderr?.on("data", (d) => {
     try {
-      logStream.write(d);
+      logStream?.write(d);
     } catch {
       // ignore
     }
@@ -146,8 +164,10 @@ function startBackendIfNeeded() {
   backendProcess.on("exit", (code, signal) => {
     backendProcess = null;
     try {
-      logStream.write(`\n--- backend exit code=${code ?? "?"} signal=${signal ?? "?"} ${new Date().toISOString()} ---\n`);
-      logStream.end();
+      logStream?.write(
+        `\n--- backend exit code=${code ?? "?"} signal=${signal ?? "?"} ${new Date().toISOString()} ---\n`,
+      );
+      logStream?.end();
     } catch {
       // ignore
     }

@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialWritingListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type WritingsTabProps = Readonly<{
   writingsLoading: boolean;
@@ -75,7 +76,7 @@ export function WritingsTab(props: WritingsTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.writing);
+                            await copyTextToClipboard(selected.writing);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

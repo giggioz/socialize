@@ -65,6 +65,7 @@ await app.register(cors, {
     return cb(new Error("CORS not allowed"), false);
   },
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 await app.register(helmet);
 await app.register(cookie);

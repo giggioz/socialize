@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { copyTextToClipboard } from "../clipboard";
 
 export type WriterTabProps = Readonly<{
   selectedContextId: string;
@@ -102,7 +103,7 @@ export function WriterTab(props: WriterTabProps) {
               disabled={!props.writerPromptText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.writerPromptText);
+                  await copyTextToClipboard(props.writerPromptText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }
@@ -146,7 +147,7 @@ export function WriterTab(props: WriterTabProps) {
               disabled={!props.writerResultText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.writerResultText);
+                  await copyTextToClipboard(props.writerResultText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }

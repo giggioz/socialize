@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialReviewListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type ReviewsTabProps = Readonly<{
   reviewsLoading: boolean;
@@ -75,7 +76,7 @@ export function ReviewsTab(props: ReviewsTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.review);
+                            await copyTextToClipboard(selected.review);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

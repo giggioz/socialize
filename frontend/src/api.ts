@@ -1,11 +1,34 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const AUTH_TOKEN_STORAGE_KEY = "authToken";
+
+function getStoredAuthToken(): string | null {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setStoredAuthToken(token: string | null) {
+  try {
+    if (token) localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+    else localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    // ignore (e.g. disabled storage)
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     ...(init?.headers ? (init.headers as Record<string, string>) : {}),
   };
   if (init?.body != null && !("Content-Type" in headers)) {
     headers["Content-Type"] = "application/json";
+  }
+  const token = getStoredAuthToken();
+  if (token && !("Authorization" in headers)) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -38,14 +61,18 @@ export async function getMe(): Promise<Me> {
 }
 
 export async function login(username: string, password: string): Promise<{ ok: true }> {
-  return request<{ ok: true }>("/auth/login", {
+  const res = await request<{ ok: true; token?: string }>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
+  setStoredAuthToken(res.token ?? null);
+  return { ok: true };
 }
 
 export async function logout(): Promise<{ ok: true }> {
-  return request<{ ok: true }>("/auth/logout", { method: "POST" });
+  const res = await request<{ ok: true }>("/auth/logout", { method: "POST" });
+  setStoredAuthToken(null);
+  return res;
 }
 
 export type StyleConfig = {

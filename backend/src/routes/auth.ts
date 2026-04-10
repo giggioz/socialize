@@ -21,7 +21,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     const token = await reply.jwtSign({ userId: String(user._id), username: user.username });
     setAuthCookie(app, reply, token);
-    return reply.send({ ok: true });
+    return reply.send({ ok: true, token });
   });
 
   app.post("/logout", async (_request, reply) => {

@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialVariantsListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type VariantsSavedTabProps = Readonly<{
   variantsLoading: boolean;
@@ -75,7 +76,7 @@ export function VariantsSavedTab(props: VariantsSavedTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.variants);
+                            await copyTextToClipboard(selected.variants);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

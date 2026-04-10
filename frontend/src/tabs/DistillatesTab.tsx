@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialDistillateListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type DistillatesTabProps = Readonly<{
   distillatesLoading: boolean;
@@ -75,7 +76,7 @@ export function DistillatesTab(props: DistillatesTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.distillate);
+                            await copyTextToClipboard(selected.distillate);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

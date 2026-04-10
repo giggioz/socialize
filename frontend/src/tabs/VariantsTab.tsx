@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { copyTextToClipboard } from "../clipboard";
 
 export type VariantsTabProps = Readonly<{
   selectedContextId: string;
@@ -102,7 +103,7 @@ export function VariantsTab(props: VariantsTabProps) {
               disabled={!props.variantsPromptText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.variantsPromptText);
+                  await copyTextToClipboard(props.variantsPromptText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }
@@ -146,7 +147,7 @@ export function VariantsTab(props: VariantsTabProps) {
               disabled={!props.variantsResultText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.variantsResultText);
+                  await copyTextToClipboard(props.variantsResultText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }

@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialPromptListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type PromptsTabProps = Readonly<{
   promptsLoading: boolean;
@@ -79,7 +80,7 @@ export function PromptsTab(props: PromptsTabProps) {
                         variant="contained"
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(selected.researchPrompt);
+                            await copyTextToClipboard(selected.researchPrompt);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }
@@ -120,7 +121,7 @@ export function PromptsTab(props: PromptsTabProps) {
                         disabled={!props.deepSearchResultText}
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(props.deepSearchResultText);
+                            await copyTextToClipboard(props.deepSearchResultText);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

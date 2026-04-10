@@ -77,7 +77,7 @@ function getErrorMessage(e: unknown, fallback: string): string {
   return fallback;
 }
 
-function LoginCard(props: Readonly<{ onLoggedIn: () => void }>) {
+function LoginCard(props: Readonly<{ onLoggedIn: () => Promise<void> }>) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -111,7 +111,7 @@ function LoginCard(props: Readonly<{ onLoggedIn: () => void }>) {
                 setError(null);
                 try {
                   await login(username, password);
-                  props.onLoggedIn();
+                  await props.onLoggedIn();
                 } catch (e: unknown) {
                   setError(getErrorMessage(e, "Login failed"));
                 } finally {
@@ -361,7 +361,11 @@ function App() {
     return (
       <LoginCard
         onLoggedIn={async () => {
-          await refreshMe();
+          try {
+            await refreshMe();
+          } catch {
+            setMe(null);
+          }
         }}
       />
     );

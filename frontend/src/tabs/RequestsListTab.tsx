@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { SocialRequestListItem } from "../api";
+import { copyTextToClipboard } from "../clipboard";
 
 export type RequestsListTabProps = Readonly<{
   srListLoading: boolean;
@@ -243,7 +244,7 @@ export function RequestsListTab(props: RequestsListTabProps) {
                         disabled={!props.drPromptText}
                         onClick={async () => {
                           try {
-                            await navigator.clipboard.writeText(props.drPromptText);
+                            await copyTextToClipboard(props.drPromptText);
                           } catch (e: unknown) {
                             props.onError(e, "Impossibile copiare negli appunti");
                           }

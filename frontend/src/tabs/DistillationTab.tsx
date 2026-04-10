@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { copyTextToClipboard } from "../clipboard";
 
 export type DistillationTabProps = Readonly<{
   selectedContextId: string;
@@ -107,7 +108,7 @@ export function DistillationTab(props: DistillationTabProps) {
               disabled={!props.distillPromptText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.distillPromptText);
+                  await copyTextToClipboard(props.distillPromptText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }
@@ -157,7 +158,7 @@ export function DistillationTab(props: DistillationTabProps) {
               disabled={!props.distillateText}
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(props.distillateText);
+                  await copyTextToClipboard(props.distillateText);
                 } catch (e: unknown) {
                   props.onError(e, "Impossibile copiare negli appunti");
                 }
