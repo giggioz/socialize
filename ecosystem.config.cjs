@@ -16,7 +16,7 @@ function productionPostDeploy() {
   return [
     `cd ${base}`,
     `cd ${base}/backend && npm ci && npm run build`,
-    `cd ${base} && pm2 startOrReload ecosystem.config.cjs --env production`,
+    `cd ${base} && pm2 delete all && pm2 start ecosystem.config.cjs --env production`,
     `pm2 save`,
   ].join(' && ');
 }
@@ -53,9 +53,9 @@ module.exports = {
     },
     {
       name: `${PROJECT_PRODUCTION}-web`,
-      cwd: path.join(__dirname, "frontend", "dist"),
+      cwd: __dirname,
       script: 'npx',
-      args: 'serve -l 8080 --single',
+      args: `serve ${path.join(__dirname, "frontend", "dist")} -l 8080 --single`,
       time: true,
       env_production: {
         NODE_ENV: 'production',
